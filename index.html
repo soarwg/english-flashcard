@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>English Flashcards</title>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #flashcard {
+      text-align: center;
+    }
+
+    #word {
+      font-size: 28px;
+      color: blue;
+      display: none;
+      margin-top: 10px;
+    }
+
+    #meaning {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #nav {
+      padding: 20px;
+      border-top: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    #nav button {
+      font-size: 16px;
+      padding: 10px 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="content">
+    <!-- Flashcard area will appear here -->
+  </div>
+
+  <div id="nav">
+    <!-- Navigation buttons will be added dynamically -->
+  </div>
+
+  <script>
+    const contentDiv = document.getElementById("content");
+    const navDiv = document.getElementById("nav");
+
+    const files = ["word1.xlsx", "word2.xlsx"]; // Add your actual Excel file names here
+
+    createNavButtons(["Home", ...files.map(f => f.replace(".xlsx", ""))]);
+
+    function createNavButtons(names) {
+      navDiv.innerHTML = "";
+      names.forEach(name => {
+        const btn = document.createElement("button");
+        btn.innerText = name;
+        btn.onclick = () => {
+          if (name === "Home") {
+            contentDiv.innerHTML = "";
+          } else {
+            loadExcel(`${name}.xlsx`);
+          }
+        };
+        navDiv.appendChild(btn);
+      });
+    }
+
+    function loadExcel(filename) {
+      fetch(filename)
+        .then(res => res.arrayBuffer())
+        .then(data => {
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet);
+
+          const cards = json.map(row => ({
+            word: row.word,
+            meaning: row.meaning_kr
+          }));
+
+          startFlashcards(cards);
+        })
+        .catch(err => {
+          alert("Failed to load " + filename);
+          console.error(err);
+        });
+    }
+
+    function startFlashcards(cards) {
+      let current = 0;
+      let step = 0;
+
+      contentDiv.innerHTML = `
+        <div id="flashcard">
+          <div id="meaning"></div>
+          <div id="word"></div>
+          <button onclick="showNextStep()">Show Word</button>
+        </div>
+      `;
+
+      function nextCard() {
+        current = (current + 1) % cards.length;
+        step = 0;
+
+        document.getElementById("meaning").innerText = cards[current].meaning;
+        document.getElementById("word").innerText = cards[current].word;
+        document.getElementById("word").style.display = "none";
+
+        document.querySelector("#flashcard button").innerText = "Show Word";
+      }
+
+      window.showNextStep = function () {
+        if (cards.length === 0) return;
+
+        if (step === 0) {
+          document.getElementById("word").style.display = "block";
+          document.querySelector("#flashcard button").innerText = "Next";
+          step = 1;
+        } else {
+          nextCard();
+        }
+      };
+
+      nextCard();
+    }
+  </script>
+
+</body>
+</html>
