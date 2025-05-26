@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>English Flashcards</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
     body {
@@ -12,6 +13,7 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
+      background: #f8f9fa;
     }
 
     #content {
@@ -19,73 +21,98 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
     }
 
     #flashcard {
       text-align: center;
-    }
-
-    #word {
-      font-size: 28px;
-      color: blue;
-      display: none;
-      margin-top: 10px;
+      width: 100%;
+      max-width: 600px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     #meaning {
-      font-size: 24px;
+      font-size: 6vw;
       font-weight: bold;
       margin-bottom: 20px;
     }
 
-    #nav {
-      padding: 20px;
-      border-top: 1px solid #ccc;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    #nav button {
-      font-size: 16px;
-      padding: 10px 20px;
-    }
-
-    #controls {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      align-items: center;
-    }
-
-    #controls button {
-      font-size: 18px;
-      padding: 10px 30px;
+    #word {
+      font-size: 7vw;
+      color: #007bff;
+      display: none;
+      margin-bottom: 20px;
     }
 
     #counter {
-      font-size: 16px;
-      font-weight: bold;
+      font-size: 5vw;
+      margin-bottom: 20px;
+    }
+
+    #controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    #controls button {
+      font-size: 5vw;
+      padding: 10px 30px;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    #controls button:hover {
+      background: #0056b3;
+    }
+
+    #nav {
+      padding: 15px;
+      border-top: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: #ffffff;
+    }
+
+    #nav button {
+      font-size: 4.5vw;
+      padding: 8px 20px;
+      border: none;
+      border-radius: 5px;
+      background: #343a40;
+      color: white;
+      cursor: pointer;
+    }
+
+    #nav button:hover {
+      background: #495057;
     }
   </style>
 </head>
 <body>
 
   <div id="content">
-    <!-- Flashcard content will be injected here -->
+    <!-- Flashcard content appears here -->
   </div>
 
   <div id="nav">
-    <!-- Section buttons will be generated here -->
+    <!-- Bottom buttons like Home, word1, word2 -->
   </div>
 
   <script>
     const contentDiv = document.getElementById("content");
     const navDiv = document.getElementById("nav");
 
-    const files = ["word1.xlsx", "word2.xlsx"]; // Add more as needed
+    const files = ["word1.xlsx", "word2.xlsx"]; // Add your Excel file names here
     createNavButtons(["Home", ...files.map(f => f.replace(".xlsx", ""))]);
 
     function createNavButtons(names) {
@@ -125,7 +152,7 @@
 
     function startFlashcards(cards) {
       let current = 0;
-      let step = 0; // 0 = show word, 1 = ready for next
+      let step = 0; // 0 = show word, 1 = next
 
       contentDiv.innerHTML = `
         <div id="flashcard">
@@ -133,8 +160,9 @@
           <div id="word"></div>
           <div id="counter"></div>
           <div id="controls">
-            <button onclick="prevCard()">Prev</button>
+            <button onclick="prevCard()">◀ Prev</button>
             <button id="nextBtn" onclick="showNextStep()">Show Word</button>
+            <button onclick="nextCard()">Next ▶</button>
           </div>
         </div>
       `;
@@ -144,19 +172,25 @@
         document.getElementById("word").innerText = cards[current].word;
         document.getElementById("word").style.display = "none";
         document.getElementById("nextBtn").innerText = "Show Word";
-        document.getElementById("counter").innerText = `(${current + 1}/${cards.length})`;
+        document.getElementById("counter").innerText = `(${current + 1} / ${cards.length})`;
         step = 0;
       }
 
       window.showNextStep = function () {
         if (step === 0) {
           document.getElementById("word").style.display = "block";
-          document.getElementById("nextBtn").innerText = "Next";
+          document.getElementById("nextBtn").innerText = "Hide Word";
           step = 1;
         } else {
-          current = (current + 1) % cards.length;
-          updateCard();
+          document.getElementById("word").style.display = "none";
+          document.getElementById("nextBtn").innerText = "Show Word";
+          step = 0;
         }
+      };
+
+      window.nextCard = function () {
+        current = (current + 1) % cards.length;
+        updateCard();
       };
 
       window.prevCard = function () {
