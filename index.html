@@ -7,7 +7,6 @@
   <style>
     body {
       font-family: sans-serif;
-      text-align: center;
       margin: 0;
       padding: 0;
       display: flex;
@@ -36,6 +35,7 @@
     #meaning {
       font-size: 24px;
       font-weight: bold;
+      margin-bottom: 20px;
     }
 
     #nav {
@@ -51,24 +51,41 @@
       font-size: 16px;
       padding: 10px 20px;
     }
+
+    #controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      align-items: center;
+    }
+
+    #controls button {
+      font-size: 18px;
+      padding: 10px 30px;
+    }
+
+    #counter {
+      font-size: 16px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
   <div id="content">
-    <!-- Flashcard area will appear here -->
+    <!-- Flashcard content will be injected here -->
   </div>
 
   <div id="nav">
-    <!-- Navigation buttons will be added dynamically -->
+    <!-- Section buttons will be generated here -->
   </div>
 
   <script>
     const contentDiv = document.getElementById("content");
     const navDiv = document.getElementById("nav");
 
-    const files = ["word1.xlsx", "word2.xlsx"]; // Add your actual Excel file names here
-
+    const files = ["word1.xlsx", "word2.xlsx"]; // Add more as needed
     createNavButtons(["Home", ...files.map(f => f.replace(".xlsx", ""))]);
 
     function createNavButtons(names) {
@@ -80,70 +97,74 @@
           if (name === "Home") {
             contentDiv.innerHTML = "";
           } else {
-            loadExcel(`${name}.xlsx`);
+            loadExcel(`https://raw.githubusercontent.com/soarwg/english-flashcard/main/${name}.xlsx`);
           }
         };
         navDiv.appendChild(btn);
       });
     }
 
-    function loadExcel(filename) {
-      fetch(filename)
+    function loadExcel(url) {
+      fetch(url)
         .then(res => res.arrayBuffer())
         .then(data => {
           const workbook = XLSX.read(data, { type: "array" });
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           const json = XLSX.utils.sheet_to_json(sheet);
-
           const cards = json.map(row => ({
             word: row.word,
             meaning: row.meaning_kr
           }));
-
           startFlashcards(cards);
         })
         .catch(err => {
-          alert("Failed to load " + filename);
+          alert("Failed to load file.");
           console.error(err);
         });
     }
 
     function startFlashcards(cards) {
       let current = 0;
-      let step = 0;
+      let step = 0; // 0 = show word, 1 = ready for next
 
       contentDiv.innerHTML = `
         <div id="flashcard">
           <div id="meaning"></div>
           <div id="word"></div>
-          <button onclick="showNextStep()">Show Word</button>
+          <div id="counter"></div>
+          <div id="controls">
+            <button onclick="prevCard()">Prev</button>
+            <button id="nextBtn" onclick="showNextStep()">Show Word</button>
+          </div>
         </div>
       `;
 
-      function nextCard() {
-        current = (current + 1) % cards.length;
-        step = 0;
-
+      function updateCard() {
         document.getElementById("meaning").innerText = cards[current].meaning;
         document.getElementById("word").innerText = cards[current].word;
         document.getElementById("word").style.display = "none";
-
-        document.querySelector("#flashcard button").innerText = "Show Word";
+        document.getElementById("nextBtn").innerText = "Show Word";
+        document.getElementById("counter").innerText = `(${current + 1}/${cards.length})`;
+        step = 0;
       }
 
       window.showNextStep = function () {
-        if (cards.length === 0) return;
-
         if (step === 0) {
           document.getElementById("word").style.display = "block";
-          document.querySelector("#flashcard button").innerText = "Next";
+          document.getElementById("nextBtn").innerText = "Next";
           step = 1;
         } else {
-          nextCard();
+          current = (current + 1) % cards.length;
+          updateCard();
         }
       };
 
-      nextCard();
+      window.prevCard = function () {
+        current = (current - 1 + cards.length) % cards.length;
+        updateCard();
+      };
+
+      updateCard();
     }
   </script>
 
