@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>English Flashcard</title>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    #flashcard {
+      margin-bottom: 20px;
+    }
+    #word {
+      font-size: 28px;
+      color: blue;
+      display: none;
+      margin-top: 10px;
+    }
+    #meaning {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin-top: 20px;
+    }
+    input[type="file"] {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="flashcard">
+    <div id="meaning"></div>
+    <div id="word"></div>
+    <button onclick="showNextStep()">Show Word</button>
+  </div>
+
+  <input type="file" id="excelFile" />
+  <button onclick="loadExcel()">Load Words</button>
+
+  <script>
+    let cards = [];
+    let current = 0;
+    let step = 0; // 0 = show word, 1 = next card
+
+    function loadExcel() {
+      const file = document.getElementById('excelFile').files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
+
+        cards = json.map(row => ({
+          word: row.word,
+          meaning: row.meaning_kr
+        }));
+
+        if (cards.length > 0) {
+          current = -1;
+          nextCard();
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function nextCard() {
+      current = (current + 1) % cards.length;
+      step = 0;
+
+      document.getElementById("meaning").innerText = cards[current].meaning;
+      document.getElementById("word").innerText = cards[current].word;
+      document.getElementById("word").style.display = "none";
+
+      document.querySelector("#flashcard button").innerText = "Show Word";
+    }
+
+    function showNextStep() {
+      if (cards.length === 0) return;
+
+      if (step === 0) {
+        document.getElementById("word").style.display = "block";
+        document.querySelector("#flashcard button").innerText = "Next";
+        step = 1;
+      } else {
+        nextCard();
+      }
+    }
+  </script>
+
+</body>
+</html>
